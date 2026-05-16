@@ -95,3 +95,51 @@ def scrape_lads():
 
         if conn:
             conn.close()
+
+@app.get("/data")
+def fetch_data():
+
+    conn = None
+    cur = None
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT
+                value,
+                scrape_date,
+                scraped_at
+            FROM sales_data
+            ORDER BY scrape_date DESC
+        """)
+
+        rows = cur.fetchall()
+
+        data = []
+
+        for row in rows:
+            data.append({
+                "value": row[0],
+                "scrape_date": row[1],
+                "scraped_at": row[2]
+            })
+
+        return {
+            "status": "success",
+            "data": data
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+    finally:
+        if cur:
+            cur.close()
+
+        if conn:
+            conn.close()
